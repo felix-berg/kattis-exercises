@@ -6,8 +6,6 @@ struct Flight {
   int start, end, day, passengers;
 };
 
-
-
 auto readInput() {
   struct {
     int numAirports, numDays;
