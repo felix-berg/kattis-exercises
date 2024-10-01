@@ -1,3 +1,4 @@
+#include <cassert>
 #include <print>
 #include <iostream>
 #include <sstream>
@@ -41,72 +42,91 @@ auto readInput() {
   return result;
 }
 
-std::unordered_map<int, std::unordered_set<int>> createAdjacencyList(
+// assumes 0 <= x < path.size() for all x ∈ `path`
+// returns adjacency list of graph where the vertex i has start time i
+// in search according to `path` (so i is index in `path`)
+std::vector<std::unordered_set<int>> createAdjacencyList(
   std::vector<Edge> const& edges, std::vector<int> const& path
 ) {
-  std::unordered_map<int, std::unordered_set<int>> result;
-  result.reserve(path.size());
-
-  for (auto v: path) {
-    result[v] = {};
+  std::vector<int> vertexToPathIndex(path.size());
+  for (int i = 0; i < path.size(); ++i) {
+    vertexToPathIndex[path[i]] = i;
   }
 
-  for (auto [u, v]: edges) {
-    result[u].insert(v);
-    result[v].insert(u);
+  std::vector<std::unordered_set<int>> adjlist(path.size(), std::unordered_set<int> {});
+  for (auto const [u, v]: edges) {
+    auto i = vertexToPathIndex[u],
+         j = vertexToPathIndex[v];
+    adjlist[i].insert(j);
+    adjlist[j].insert(i); // undirected
   }
 
-  return result;
+  return adjlist;
 }
 
-bool isValid(auto const& path, auto const& adjlist, int nVertices) {
-  if (path.size() != nVertices)
-    return false;
 
-  int n = path.size();
-  std::vector<bool> marked(n, false);
+static constexpr int NO_INDEX = -1;
+
+// create valid start time intervals [i, endIndices[i]) each node i ∈ {0...adjlist.size()}
+std::vector<int> createDFSTree(std::vector<std::unordered_set<int>> const& adjlist) {
+  int n = adjlist.size();
+  std::vector<int> endIndices(adjlist.size(), NO_INDEX);
+
+  std::vector<int> reverseRoots;
+  reverseRoots.reserve(adjlist.size()); // would be worst case O(n) anyway
 
   for (int i = n - 1; i >= 0; --i) {
-    int vi = path[i];
-
-    bool consuming = true;
-    for (int j = i + 1; j < n; ++j) {
-      int vj = path[j];
-
-      if (consuming) {
-        if (!marked[j]) {
-          if (adjlist.at(vi).contains(vj)) {
-            marked[j] = true; // child of vi
-          } else {
-            consuming = false;
-          }
-        }
+    int rootsToRemove = 0;
+    // go through roots (in correct order)
+    for (int j: reverseRoots | std::ranges::views::reverse) {
+      if (adjlist[i].contains(j)) {
+        rootsToRemove++;
       } else {
-        if (adjlist.at(vi).contains(vj)) {
-            return false; // NIX
-        }
+        break;
       }
     }
+    
+    reverseRoots.erase(reverseRoots.end() - rootsToRemove, reverseRoots.end());
+    endIndices[i] = reverseRoots.empty() ? n : reverseRoots.back();
+    reverseRoots.push_back(i); // why it is reversed :))
   }
 
-  for (int j = 1; j < n; ++j) {
-    if (!marked[j]) {
-      return false; // NIX
+  return endIndices;
+}
+
+bool validDFSTree(
+  std::vector<int> const& endIndices, 
+  std::vector<std::unordered_set<int>> const& adjlist
+) {
+  // invalid if not all in one tree, ie. interval of source is not [0, n),
+  if (endIndices[0] != adjlist.size())
+    return false;
+
+  // invalid if any node has adjacency outside of its range
+  for (int i = 0; i < adjlist.size(); ++i) {
+    int maxStartTime = endIndices[i];
+    for (int j: adjlist[i]) {
+      if (j >= maxStartTime) {
+        return false;
+      }
     }
   }
 
   return true;
 }
 
-
-
 int main(int argc, char** argv) {
   auto [ nVertices, edges, path ] = readInput();
 
-  auto const whichVertices = path | std::ranges::to<std::unordered_set>();
-  auto const adjlist = createAdjacencyList(edges, path);
+  if (path.size() != nVertices) {
+    std::println("NO");
+    return EXIT_SUCCESS;
+  }
 
-  std::println("{}", isValid(path, adjlist, nVertices) ? "YES" : "NO");
+  auto const adjlist = createAdjacencyList(edges, path);
+  auto const endIndices = createDFSTree(adjlist);
+  
+  std::println("{}", validDFSTree(endIndices, adjlist) ? "YES" : "NO");
 
   return 0;
 }
