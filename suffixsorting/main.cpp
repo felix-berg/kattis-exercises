@@ -44,6 +44,20 @@ std::vector<int> computeSuffixRanks(std::string str) {
   return ranks;
 }
 
+struct Result {
+  std::vector<int> nexts;
+  std::vector<int> prevs;
+};
+
+Result doThing(std::string word) {
+  Result result;
+  result.nexts.resize(word.size());
+  result.prevs.resize(word.size());
+
+
+
+}
+
 auto readInput() {
   struct Case {
     std::string word;
