@@ -26,7 +26,7 @@ bool iLessThanj(int i, int j, std::string const& str, std::vector<int>& ranks) {
   }
 
   // if xi == xj, then xi...xn < xj...xn iff x(i+1)..xn < x(j+1)...xn
-  return iLessThanj(i + 1, j + 1, str, ranks);
+  return ranks[i + 1] < ranks[j + 1];
 }
 
 std::vector<int> const& computeSuffixRanks(std::string str) {
