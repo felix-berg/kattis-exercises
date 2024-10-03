@@ -45,7 +45,13 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # Run make
-make -C build &> /dev/null
+
+if [ "$quiet" = false ]; then
+    make -C build
+else
+    make -C build &> /dev/null
+fi
+
 if [[ $? -ne 0 ]]; then
     printf "\n!!! Compilation failed. Exiting...\n"
     exit
