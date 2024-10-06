@@ -117,6 +117,33 @@ std::vector<int> computeWaste(
   return waste;
 }
 
+void insertIntervalIfDisjoint(std::vector<Interval>& intervals, Interval i) {
+  assert(not intervals.empty());
+
+  auto cmp = [](const auto& a, const auto& b) {
+    return a.from < b.from;
+  };
+
+  // already exists interval with this start time
+  if (std::ranges::binary_search(intervals, i, cmp))
+    return;
+
+  auto pos = std::ranges::lower_bound(intervals, i, cmp);
+
+  if (pos == intervals.end()) {
+    if (std::prev(pos)->to > i.from) 
+      return;
+
+    intervals.insert(pos, i);
+    return;
+  }
+
+  if (i.to > pos->from) 
+    return; // not disjoint
+  
+  intervals.insert(pos, i);
+}
+
 int main(int argc, char** argv)
 {
   auto [ intervals, tripTime, maxTime ] = readInput();
@@ -128,20 +155,14 @@ int main(int argc, char** argv)
 
   // make choosing [T - S, T) (as late as possible) 
   // viable by creating empty ad break [T - S, T - S)
-  if (maxTime - tripTime < intervals[0].from) {
-    intervals.emplace(intervals.begin(), 
-        maxTime - tripTime, 
-        maxTime - tripTime
-    );
-  }
+  insertIntervalIfDisjoint(intervals, Interval {
+    maxTime - tripTime, maxTime - tripTime
+  });
 
   auto matches = computeMatches(intervals, tripTime, maxTime);
   auto space = computePreceedingSpace(intervals, maxTime);
   auto waste = computeWaste(intervals, matches, space, tripTime);
 
-  // for (auto [f, t]: intervals)
-  //   std::print("[{} {}) ", f, t);
-  // std::println("\n{}", space);
   std::println("{}", *std::ranges::min_element(waste));
 
   return 0;
