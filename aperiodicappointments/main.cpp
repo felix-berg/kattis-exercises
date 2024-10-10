@@ -1,71 +1,59 @@
 #include <print>
+#include <cassert>
 #include <iostream>
-#include <unordered_map>
 #include <cmath>
 
-int intPow(int n, int e) {
-  return static_cast<int>(std::pow(n, e));
+uint64_t intPow(uint64_t base, uint64_t exp) {
+  return std::powl(base, exp);
 }
 
-int nodesInFullKAryTree(int k, int h) {
+uint64_t flooredLogBase(uint64_t x, uint64_t b) {
+  return std::log2l(x) / std::log2l(b);
+}
+
+uint64_t highestContainedTree(uint64_t k, uint64_t n) {
+  return flooredLogBase(n * (k - 1) + 1, k);
+}
+
+uint64_t numInFullTree(uint64_t k, uint64_t h) {
   return (intPow(k, h) - 1) / (k - 1);
 }
 
-int64_t hashPair(int a, int b) {
-  return static_cast<int64_t>(a) << 31 | static_cast<int64_t>(b);
+uint64_t numLeavesInFullTree(uint64_t k, uint64_t h) {
+  return intPow(k, h - 1);
 }
 
-int maxTreeKAryTreeHeightInN(int k, int n) {
-  static std::unordered_map<int64_t, int> memo;
+uint64_t numberOfOnes(uint64_t k, uint64_t n) {
+  assert(n >= 0);
+  if (n == 0) 
+    return 0;
 
-  int64_t p = hashPair(k, n);
-  if (memo.contains(p))
-    return memo.at(p);
-
-  int h = 1;
-  while (nodesInFullKAryTree(k, h) <= n) 
-    h++;
-  memo[p] = h - 1;
-  return h - 1;
-}
-
-int numInternalNodes(int k, int h) {
-  return nodesInFullKAryTree(k, h) - intPow(k, h - 1);
-}
-
-int numOnes(int k, int n) {
-  if (n <= k) return 0;
-
-  static std::unordered_map<int64_t, int> memo;
-  int64_t p = hashPair(k, n);
-  if (memo.contains(p))
-    return memo.at(p);
-
-  // find height of max tree that we can 'pack' into n
-  int maxHeight = maxTreeKAryTreeHeightInN(k, n);
-  int answ;
-  if (maxHeight <= k) { // if there are < maxHeight internal layers
-    // nick is not addicted to doctor yet
-    int numIntNodes = numInternalNodes(k, maxHeight);
-    int numLeft = n - nodesInFullKAryTree(k, maxHeight);
-    
-    answ = numIntNodes + numOnes(k, numLeft);
+  // highest k-ary tree with <= n nodes
+  uint64_t h = highestContainedTree(k, n);
+  if (h >= k + 1) { // (if there are >= k internal nodes)
+    return n - numLeavesInFullTree(k, k + 1);
   } else {
-    // nick is addicted to docor 💀💀💀
-    int numIntNodes = numInternalNodes(k, k + 1);
-    int rest = n - nodesInFullKAryTree(k, k + 1); // rest are 1's
-    answ = numIntNodes + rest;
+    uint64_t size = numInFullTree(k, h);
+    int numTrees = n / size;
+    uint64_t internalNodes = numTrees * (size - numLeavesInFullTree(k, h));
+    return internalNodes + numberOfOnes(k, n % size);
   }
-  memo[p] = answ;
-  return answ;
 }
 
-int main(int argc, char** argv)
-{
-  int k, n;
+int main(int argc, char** argv) {
+  uint64_t k, n;
   std::cin >> n >> k;
-
-  std::println("{}", numOnes(k, n));
-
+  std::println("{}", numberOfOnes(k, n));
   return 0;
-}
+}              
+
+// biggest tree with k = 3 before nick gets addicted 💀
+// string 'walks' in post-order (right, left, root)
+//                  1
+//            /     |     \
+//      1           1           1
+//    / | \       / | \       / | \
+//   /  |  \     /  |  \     /  |  \
+//  1   1   1   1   1   1   1   1   1
+//  |   |   |   |   |   |   |   |   |
+// 000 000 000 000 000 000 000 000 000 
