@@ -8,6 +8,10 @@
 #include <algorithm>
 #include <ranges>
 
+struct RedBlackTree {
+
+};
+
 // whether xi...xn < xj...xn for i <= n, j <= n + 1 (where n = `str.size() - 1`)
 bool iLessThanj(int i, int j, std::string const& str, std::vector<int64_t>& ranks) {
 
