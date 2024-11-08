@@ -6,13 +6,5 @@ if(NOT ${FB_STDLIB} STREQUAL "")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=${FB_STDLIB}")
 endif()
 
-add_subdirectory(ext/cpp-redblack-tree)
-
 add_executable(${PROJECT_NAME} main.cpp)
-
-target_include_directories(${PROJECT_NAME} 
-    PUBLIC include
-    PRIVATE ext/cpp-redblack-tree/include
-)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE redblack)
+target_include_directories(${PROJECT_NAME} PUBLIC include)

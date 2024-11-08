@@ -1,19 +1,16 @@
-#include <limits>
 #include <print>
 #include <vector>
 #include <iostream>
 #include <cassert>
 #include <sstream>
-#include <set>
 #include <algorithm>
 #include <ranges>
 
-struct RedBlackTree {
-
-};
+#include "rbtree.hpp"
+using namespace fb::ds;
 
 // whether xi...xn < xj...xn for i <= n, j <= n + 1 (where n = `str.size() - 1`)
-bool iLessThanj(int i, int j, std::string const& str, std::vector<int64_t>& ranks) {
+bool iLessThanj(int i, int j, std::string const& str, auto&& getRank) {
 
   // if xj...xn = Λ, then xi...xn > xj...xn
   if (j >= str.size())
@@ -28,41 +25,60 @@ bool iLessThanj(int i, int j, std::string const& str, std::vector<int64_t>& rank
     return false;
   
   // if xi == xj, then xi...xn < xj...xn iff x(i+1)..xn < x(j+1)...xn
-  return ranks[i + 1] < ranks[j + 1];
+  return getRank(i + 1) < getRank(j + 1);
+}
+
+template <typename Cmp, typename CalcAug>
+int getTreeRank(AugRBTree<int, Cmp, int, CalcAug>& tree, int key) {
+  size_t root = tree.root();
+  size_t y = tree.find(key);
+  if (y == tree::NIL) return 0;
+  int rank = 1;
+  while (y != root) {
+    size_t par = tree.node(y).parent;
+    if (tree.node(par).right == y) { // if y is right child
+      size_t l = tree.node(par).left;
+      rank += tree.augment(l) + 1; // add parent and left subtree
+    }
+    y = par;
+  }
+
+  return rank;
+}
+
+template <typename Cmp, typename CalcAug>
+std::function<bool(int, int)> getComparisonFunction(
+  AugRBTree<int, Cmp, int, CalcAug>& tree, std::string const& str
+) {
+  return [&tree, &str](int i, int j) {
+    return iLessThanj(i, j, str, [&tree](int key) { return getTreeRank(tree, key); });
+  };
+}
+
+std::function<void(AugmentArg<int, int>)> getComputeAugment() {
+  return [](AugmentArg<int, int> arg) {
+    int l = arg.left == nullptr ? 0 : *arg.left;
+    int r = arg.right == nullptr ? 0 : *arg.right;
+    arg.parent = 1 + l + r;
+  };
 }
 
 std::vector<int64_t> computeSuffixRanks(std::string str) {
   // not actual rank, but we know that ranks[i] < ranks[j] iff xi...xn < xj...xn
-  std::vector<int64_t> ranks;
-
   int n = str.size();
-  ranks.resize(n);
 
-  auto const cmp = [&str, &ranks](int i, int j) {
-    return iLessThanj(i, j, str, ranks);
-  };
-  
+  using Cmp = std::function<bool(int, int)>;
+  using CalcAug = std::function<void(AugmentArg<int, int>)>;
+
   // red-black tree of integers sorted by whether xi...xn < xj...xn
-  std::set<int, decltype(cmp)> set { cmp };
+  SimpleRBTree<int, int> tree = createAugmentedRBTree(getComputeAugment(), getComparisonFunction(*tree, str));
+
+  tree->insert(1);
 
   for (int i = n - 1; i >= 0; --i) {
-    auto [ it, inserted ] = set.insert(i);
-    assert(inserted);
-
-    auto next = std::next(it);
-
-    int64_t top = next == set.end() ? 
-      std::numeric_limits<int64_t>::max() :
-      ranks[*next];
-
-    int64_t bot = it == set.begin() ? 
-      0 : ranks[*std::prev(it)];
-
-    // pick the middle value between the two neighbours in tree
-    ranks[i] = bot + (top - bot) / 2;
+    
   }
 
-  return ranks;
 }
 
 auto readInput() {
