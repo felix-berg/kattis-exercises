@@ -1,0 +1,18 @@
+# dune exec template
+# OCAMLPARAM: unset
+# Shared cache: enabled-except-user-rules
+# Shared cache location: /Users/felix/.cache/dune/db
+# Workspace root: /Users/felix/dev/personal/kattis/basicprogramming
+# Auto-detected concurrency: 8
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ /Users/felix/.opam/default/bin/ocamlc.opt -config > /var/folders/04/0l3f14rx3lggqbmdzh1cy_3w0000gp/T/dune_9d7b69_output
+$ (cd _build/default && /Users/felix/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -warn-error -A -g -I bin/.main.eobjs/byte -I bin/.main.eobjs/native -I lib/.template.objs/byte -I lib/.template.objs/native -intf-suffix .ml -no-alias-deps -opaque -o bin/.main.eobjs/native/dune__exe__Main.cmx -c -impl bin/main.ml)
+$ (cd _build/default && /Users/felix/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -warn-error -A -g -o bin/main.exe lib/template.cmxa bin/.main.eobjs/native/dune__exe__Main.cmx)
